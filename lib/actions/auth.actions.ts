@@ -8,7 +8,7 @@ import crypto from "crypto";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
-const JWT_EXPIRES_IN = "1d";
+const JWT_EXPIRES_IN = "7d";
 const OTP_EXPIRY_MINUTES = 10;
 
 interface JWTPayload {
@@ -62,14 +62,20 @@ export const signUpWithEmail = async ({
     admin.otpExpiry = otpExpiry;
     await admin.save();
 
-    // In production, send OTP via email
-    // For now, we'll return it (remove in production)
-    console.log(`OTP for ${email}: ${otp}`);
+    // Send OTP via email
+    try {
+      const { sendOTPEmail } = await import("../email");
+      await sendOTPEmail(email, otp, name);
+    } catch (emailError) {
+      console.error("Failed to send OTP email:", emailError);
+      // Still return success but log OTP for development
+      console.log(`OTP for ${email}: ${otp} (email service unavailable)`);
+    }
 
     return {
       success: true,
-      message: "Admin created. Please verify your email with OTP.",
-      otp, // Remove in production
+      message:
+        "Admin created. Please check your email for the verification code.",
     };
   } catch (e) {
     console.error("Sign up failed", e);
@@ -107,13 +113,20 @@ export const signInWithEmail = async ({
       admin.otpExpiry = otpExpiry;
       await admin.save();
 
-      console.log(`OTP for ${email}: ${otp}`);
+      // Send OTP via email
+      try {
+        const { sendOTPEmail } = await import("../email");
+        await sendOTPEmail(email, otp, admin.name);
+      } catch (emailError) {
+        console.error("Failed to send OTP email:", emailError);
+        console.log(`OTP for ${email}: ${otp} (email service unavailable)`);
+      }
 
       return {
         success: false,
-        message: "Please verify your email first",
+        message:
+          "Please verify your email. Check your inbox for the verification code.",
         requiresOTP: true,
-        otp, // Remove in production
       };
     }
 
@@ -190,6 +203,14 @@ export const verifyOTP = async ({
     admin.otp = undefined;
     admin.otpExpiry = undefined;
     await admin.save();
+
+    // Send welcome email
+    try {
+      const { sendWelcomeEmail } = await import("../email");
+      await sendWelcomeEmail(email, admin.name);
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
 
     // Generate JWT
     const token = generateToken({
@@ -361,12 +382,18 @@ export const resendOTP = async ({ email }: { email: string }) => {
     admin.otpExpiry = otpExpiry;
     await admin.save();
 
-    console.log(`New OTP for ${email}: ${otp}`);
+    // Send OTP via email
+    try {
+      const { sendOTPEmail } = await import("../email");
+      await sendOTPEmail(email, otp, admin.name);
+    } catch (emailError) {
+      console.error("Failed to send OTP email:", emailError);
+      console.log(`New OTP for ${email}: ${otp} (email service unavailable)`);
+    }
 
     return {
       success: true,
-      message: "OTP sent successfully",
-      otp, // Remove in production
+      message: "Verification code sent to your email",
     };
   } catch (e) {
     console.error("Resend OTP failed", e);
