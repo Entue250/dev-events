@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
+import { GOOGLE_CLIENT_ID, getGoogleUserInfo } from "@/lib/google-auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-export default function AdminSignIn() {
+function SignInForm() {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
@@ -58,7 +60,9 @@ export default function AdminSignIn() {
       } else {
         if (data.requiresOTP) {
           setShowOTP(true);
-          setSuccessMessage("Please verify your email with OTP");
+          setSuccessMessage(
+            "Please verify your email with the code sent to your inbox"
+          );
         } else {
           setError(data.message);
         }
@@ -118,23 +122,62 @@ export default function AdminSignIn() {
       const data = await response.json();
 
       if (data.success) {
-        setSuccessMessage("OTP sent successfully!");
+        setSuccessMessage("Verification code sent to your email!");
       } else {
         setError(data.message);
       }
     } catch (err) {
-      setError("Failed to resend OTP. Please try again.");
+      setError("Failed to resend code. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    // In production, integrate with Google OAuth
-    // For now, this is a placeholder
-    alert("Google Sign In - Please configure Google OAuth in production");
-    // Use next-auth or @react-oauth/google for actual implementation
-  };
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      setError("");
+
+      try {
+        // Get user info from Google
+        const userInfo = await getGoogleUserInfo(tokenResponse.access_token);
+
+        if (!userInfo) {
+          setError("Failed to get user information from Google");
+          setLoading(false);
+          return;
+        }
+
+        // Send to our backend
+        const response = await fetch(`${BASE_URL}/api/auth`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "google-signin",
+            email: userInfo.email,
+            name: userInfo.name,
+            googleId: userInfo.sub,
+            avatar: userInfo.picture,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          router.push("/admin/dashboard");
+        } else {
+          setError(data.message || "Google sign in failed");
+        }
+      } catch (err) {
+        setError("Google sign in failed. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setError("Google sign in was cancelled or failed");
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -156,7 +199,7 @@ export default function AdminSignIn() {
             </h2>
             <p className="text-light-200">
               {showOTP
-                ? "Enter the OTP sent to your email"
+                ? "Enter the code sent to your email"
                 : isSignUp
                 ? "Create your admin account"
                 : "Access the admin dashboard"}
@@ -164,13 +207,13 @@ export default function AdminSignIn() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-md mb-4">
+            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-md mb-4 text-sm">
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="bg-green-500/10 border border-green-500 text-green-500 px-4 py-3 rounded-md mb-4">
+            <div className="bg-green-500/10 border border-green-500 text-green-500 px-4 py-3 rounded-md mb-4 text-sm">
               {successMessage}
             </div>
           )}
@@ -250,8 +293,9 @@ export default function AdminSignIn() {
 
               {/* Google Sign In */}
               <button
-                onClick={handleGoogleSignIn}
-                className="w-full bg-white hover:bg-gray-100 text-black font-semibold py-3 rounded-md transition-colors flex items-center justify-center gap-2"
+                onClick={() => googleLogin()}
+                disabled={loading || !GOOGLE_CLIENT_ID}
+                className="w-full bg-white hover:bg-gray-100 text-black font-semibold py-3 rounded-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -271,7 +315,9 @@ export default function AdminSignIn() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Sign in with Google
+                {!GOOGLE_CLIENT_ID
+                  ? "Google OAuth not configured"
+                  : "Sign in with Google"}
               </button>
 
               {/* Toggle Sign Up/In */}
@@ -296,7 +342,7 @@ export default function AdminSignIn() {
               <form onSubmit={handleOTPVerification} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Enter OTP
+                    Enter Verification Code
                   </label>
                   <input
                     type="text"
@@ -305,9 +351,13 @@ export default function AdminSignIn() {
                     onChange={handleChange}
                     required
                     maxLength={6}
+                    pattern="[0-9]{6}"
                     className="w-full bg-dark-200 rounded-md px-4 py-3 text-center text-2xl tracking-widest focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="000000"
                   />
+                  <p className="text-xs text-light-200 mt-2 text-center">
+                    Check your email for the 6-digit code
+                  </p>
                 </div>
 
                 <button
@@ -315,16 +365,16 @@ export default function AdminSignIn() {
                   disabled={loading}
                   className="w-full bg-primary hover:bg-primary/90 text-black font-semibold py-3 rounded-md transition-colors disabled:opacity-50"
                 >
-                  {loading ? "Verifying..." : "Verify OTP"}
+                  {loading ? "Verifying..." : "Verify Code"}
                 </button>
 
                 <button
                   type="button"
                   onClick={handleResendOTP}
                   disabled={loading}
-                  className="w-full text-primary hover:text-primary/80 text-sm"
+                  className="w-full text-primary hover:text-primary/80 text-sm disabled:opacity-50"
                 >
-                  Resend OTP
+                  Resend Code
                 </button>
 
                 <button
@@ -345,5 +395,19 @@ export default function AdminSignIn() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminSignIn() {
+  if (!GOOGLE_CLIENT_ID) {
+    console.warn(
+      "Google OAuth not configured. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your .env file"
+    );
+  }
+
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <SignInForm />
+    </GoogleOAuthProvider>
   );
 }
