@@ -82,16 +82,16 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDelete = async (eventId: string) => {
+  const handleDelete = async (eventSlug: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return;
 
     try {
-      const response = await fetch(`${BASE_URL}/api/events/${eventId}`, {
+      const response = await fetch(`${BASE_URL}/api/events/${eventSlug}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setEvents(events.filter((e) => e._id !== eventId));
+        setEvents(events.filter((e) => e.slug !== eventSlug));
       }
     } catch (err) {
       alert("Failed to delete event");
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                           Edit
                         </Link>
                         <button
-                          onClick={() => handleDelete(event._id)}
+                          onClick={() => handleDelete(event.slug)}
                           className="text-red-400 hover:text-red-300 transition-colors"
                         >
                           Delete
