@@ -117,9 +117,13 @@ export const signInWithEmail = async ({
       try {
         const { sendOTPEmail } = await import("../email");
         await sendOTPEmail(email, otp, admin.name);
+        console.log(
+          `✅ OTP email sent successfully to edouardoniyomugabo@gmail.com for user: ${email}`
+        );
+        console.log(`📧 OTP Code: ${otp} (also sent to email)`);
       } catch (emailError) {
         console.error("Failed to send OTP email:", emailError);
-        console.log(`OTP for ${email}: ${otp} (email service unavailable)`);
+        console.log(`⚠️ Email failed, but here's the OTP for ${email}: ${otp}`);
       }
 
       return {
@@ -386,9 +390,13 @@ export const resendOTP = async ({ email }: { email: string }) => {
     try {
       const { sendOTPEmail } = await import("../email");
       await sendOTPEmail(email, otp, admin.name);
+      console.log(
+        `✅ OTP resent successfully to edouardoniyomugabo@gmail.com for user: ${email}`
+      );
+      console.log(`📧 OTP Code: ${otp} (also sent to email)`);
     } catch (emailError) {
       console.error("Failed to send OTP email:", emailError);
-      console.log(`New OTP for ${email}: ${otp} (email service unavailable)`);
+      console.log(`⚠️ Email failed, but here's the OTP for ${email}: ${otp}`);
     }
 
     return {
