@@ -4,9 +4,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendOTPEmail(email: string, otp: string, name: string) {
   try {
+    // For development: always send to your verified email
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const recipientEmail = isDevelopment
+      ? "edouardoniyomugabo@gmail.com"
+      : email;
+
     const { data, error } = await resend.emails.send({
       from: "DevSphere <onboarding@resend.dev>", // Change to your verified domain in production
-      to: [email],
+      to: [recipientEmail],
       subject: "Verify Your DevSphere Admin Account",
       html: `
         <!DOCTYPE html>
@@ -72,6 +78,15 @@ export async function sendOTPEmail(email: string, otp: string, name: string) {
                 border-radius: 4px;
                 color: #856404;
               }
+              .dev-note {
+                background-color: #e3f2fd;
+                border-left: 4px solid #2196f3;
+                padding: 12px;
+                margin: 20px 0;
+                border-radius: 4px;
+                color: #1565c0;
+                font-size: 14px;
+              }
             </style>
           </head>
           <body>
@@ -82,6 +97,16 @@ export async function sendOTPEmail(email: string, otp: string, name: string) {
               </div>
               
               <div class="content">
+                ${
+                  isDevelopment && email !== recipientEmail
+                    ? `
+                  <div class="dev-note">
+                    <strong>🔧 Development Mode:</strong> This email was sent to ${recipientEmail} instead of ${email} because you haven't verified a domain in Resend yet. Original signup email: <strong>${email}</strong>
+                  </div>
+                `
+                    : ""
+                }
+                
                 <p>Hi <strong>${name}</strong>,</p>
                 <p>Thank you for registering as an admin on DevSphere! To complete your registration, please use the following One-Time Password (OTP):</p>
                 
@@ -92,6 +117,14 @@ export async function sendOTPEmail(email: string, otp: string, name: string) {
                 <div class="warning">
                   <strong>⏰ This OTP expires in 10 minutes.</strong>
                 </div>
+                
+                ${
+                  isDevelopment && email !== recipientEmail
+                    ? `
+                  <p><strong>Note:</strong> Account registered for: <code>${email}</code></p>
+                `
+                    : ""
+                }
                 
                 <p>If you didn't request this verification, please ignore this email or contact support if you have concerns.</p>
                 
@@ -122,9 +155,15 @@ export async function sendOTPEmail(email: string, otp: string, name: string) {
 
 export async function sendWelcomeEmail(email: string, name: string) {
   try {
+    // For development: always send to your verified email
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const recipientEmail = isDevelopment
+      ? "edouardoniyomugabo@gmail.com"
+      : email;
+
     const { data, error } = await resend.emails.send({
       from: "DevSphere <onboarding@resend.dev>",
-      to: [email],
+      to: [recipientEmail],
       subject: "Welcome to DevSphere Admin Panel!",
       html: `
         <!DOCTYPE html>
