@@ -1,0 +1,69 @@
+dev-events/
+├── .next/                              # ⚙️ Auto-generated build folder by Next.js (never edit manually)
+│
+├── app/                                # 🌐 Next.js App Router directory (contains pages, layouts, APIs)
+│   ├── api/                            # 🧩 Serverless API endpoints
+│   │   └── events/
+│   │       ├── [slug]/route.ts         # Handles API requests for a specific event by slug
+│   │       └── route.ts                # Handles fetching all events (GET/POST endpoints)
+│   │
+│   ├── events/                         # 🗓️ Dynamic event pages
+│   │   └── [slug]/page.tsx             # Displays details for a specific event (client page)
+│   │
+│   ├── favicon.ico                     # Browser tab icon
+│   ├── globals.css                     # Global styles for the entire app
+│   ├── layout.tsx                      # Root layout (applies Navbar, fonts, metadata)
+│   └── page.tsx                        # Homepage of the application (lists or features events)
+│
+├── components/                         # 🧱 Reusable React UI components
+│   ├── BookEvent.tsx                   # Booking form component for event registration
+│   ├── EventCard.tsx                   # Card UI for displaying each event summary
+│   ├── ExploreBtn.tsx                  # Interactive button to explore more events
+│   ├── LightRays.tsx                   # Decorative or animated light effect (TypeScript version)
+│   ├── LightRays.jsx                   # Possibly legacy or test version of LightRays
+│   ├── LightRays.css                   # CSS styles used by LightRays component
+│   └── Navbar.tsx                      # Top navigation bar for the site
+│
+├── database/                           # 🗃️ Database models (Mongoose or MongoDB schema definitions)
+│   ├── booking.model.ts                # Defines Booking schema (name, email, eventId, etc.)
+│   └── event.model.ts                  # Defines Event schema (title, date, location, etc.)
+│
+├── lib/                                # 🧠 Core logic and helper functions
+│   ├── actions/                        # Server actions (Next.js 13+ server functions)
+│   │   ├── booking.actions.ts          # Handles event booking operations
+│   │   └── event.actions.ts            # Handles event CRUD (create, update, delete, fetch)
+│   ├── constants.ts                    # Shared constants (e.g., API URLs, default settings)
+│   ├── mongodb.ts                      # MongoDB connection setup and caching
+│   └── utils.ts                        # General-purpose utility functions
+│
+├── public/                             # 🌆 Static files served directly (no import needed)
+│   ├── icons/                          # SVGs and small icons
+│   │   ├── arrow-down.svg
+│   │   ├── audience.svg
+│   │   ├── calendar.svg
+│   │   ├── clock.svg
+│   │   ├── logo.png
+│   │   ├── mode.svg
+│   │   └── pin.svg
+│   │
+│   └── images/                         # Static images for events or banners
+│       ├── event1.png
+│       ├── event2.png
+│       ├── event3.png
+│       ├── event4.png
+│       ├── event5.png
+│       └── event6.png
+│
+├── .env                                # 🔐 Environment variables (e.g., DB_URI, API_KEY)
+├── .gitignore                          # 🚫 Files ignored by Git (e.g., node_modules, .next)
+├── components.json                     # Configuration for UI components (e.g., shadcn/ui setup)
+├── eslint.config.mjs                   # 🧹 Linting rules for maintaining code quality
+├── instrumentation-client.ts           # 🧭 Analytics or performance monitoring (client-side setup)
+├── next-env.d.ts                       # TypeScript types for Next.js environment
+├── next.config.ts                      # ⚙️ Main Next.js configuration file (routes, plugins, etc.)
+├── package-lock.json                   # 📦 Auto-generated dependency lock file
+├── package.json                        # 📜 Project dependencies, scripts, and metadata
+├── postcss.config.mjs                  # 🎨 PostCSS configuration for Tailwind and CSS processing
+├── README.md                           # 📘 Project overview and setup instructions
+├── tsconfig.json                       # 🧩 TypeScript compiler options and path aliases
+└── structure.txt                       # 📄 (This file) – project structure documentation
